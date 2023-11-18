@@ -1,4 +1,4 @@
-openai
+openai==0.28
 anthropic
 # torch # Install torch separately https://pytorch.orgget-started/locally/
 transformers
@@ -11,3 +11,4 @@ accelerate
 bitsandbytes
 scipy
 sentencepiece
+# 
