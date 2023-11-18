@@ -33,7 +33,7 @@ def main():
     )
     
     query_handler = LLMQueryHandler()
-    
+
     while True:
         user_input = input("User> ")
         if user_input.lower() == 'exit':
@@ -52,9 +52,11 @@ def main():
         if start_index != -1 and end_index != -1:
             # Extracting the command from within the <bash> tags
             command_to_run = model_response[start_index + len(start_tag):end_index].strip()
-            print(f"Executing command: {command_to_run}")
-            output = execute_command(command_to_run)
-            print(f"Command Output: \n{output}")
+            if input("Do you want to run this command? (yes/no): ").lower() == 'yes':
+                output = execute_command(command_to_run)
+                print(f"Command Output: \n{output}")
+            else:
+                print("Command execution cancelled.")
         else:
             print("No command found to execute.")
 
