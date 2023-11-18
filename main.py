@@ -1,9 +1,20 @@
 import sys
 import subprocess
 from backends import OpenAIChatBackend
+import os
+
+
+
 
 class LLMQueryHandler:
     def __init__(self):
+        api_key = os.getenv('OPENAI_API_KEY')
+        if api_key is None:
+            print("Error: The OpenAI API key is not set. Please set the OPENAI_API_KEY environment variable.")
+            sys.exit(1)  # Exit the program if the API key is not set
+        self.backend = OpenAIChatBackend("gpt-4")
+
+        
         self.backend = OpenAIChatBackend("gpt-4")
 
     def query_LLM(self, system_prompt, user_prompt):
