@@ -2,6 +2,7 @@ import sys
 import subprocess
 from backends import OpenAIChatBackend
 import os
+import openai
 
 
 
@@ -14,10 +15,20 @@ class LLMQueryHandler:
             sys.exit(1)  # Exit the program if the API key is not set
         self.backend = OpenAIChatBackend("gpt-4")
 
-        
-        self.backend = OpenAIChatBackend("gpt-4")
 
     def query_LLM(self, system_prompt, user_prompt):
+        '''
+        response_stream = openai.Completion.create(
+            model=self.model_name,
+            prompt=f"{system_prompt}\n{user_prompt}",
+            stream=True
+        )
+
+        # Iterate over the stream and process the tokens as they come in
+        for response in response_stream:
+            # Process the response token-by-token
+            print(response, end='', flush=True)  # 
+        '''
         response = self.backend.complete(system_prompt, user_prompt)
         return response
 
