@@ -6,9 +6,7 @@ backoff
 wandb
 pandas
 matplotlib
-seaborn
 accelerate
 bitsandbytes
 scipy
 sentencepiece
-# 

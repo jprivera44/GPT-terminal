@@ -17,20 +17,41 @@ class LLMQueryHandler:
 
 
     def query_LLM(self, system_prompt, user_prompt):
-        '''
-        response_stream = openai.Completion.create(
-            model=self.model_name,
-            prompt=f"{system_prompt}\n{user_prompt}",
+
+        response = self.backend.complete(system_prompt, user_prompt)
+        return response
+
+#The code below is meant for the streaming of tokens, however I kept receiveing a nontype error
+#This is likley becuae i am using openai version 0.28, and streaming is not supported on this version.
+'''
+class LLMQueryHandler:
+    def __init__(self):
+        api_key = os.getenv('OPENAI_API_KEY')
+        if api_key is None:
+            print("Error: The OpenAI API key is not set. Please set the OPENAI_API_KEY environment variable.")
+            sys.exit(1)  # Exit the program if the API key is not set
+        self.backend = OpenAIChatBackend("text-davinci-003")
+
+    def query_LLM(self, system_prompt, user_prompt):
+        # Using the streaming functionality with the correct endpoint
+        response_stream = openai.ChatCompletion.create(
+            model=self.backend.model_name,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+            temperature=1.0,
+            max_tokens=100,  # Adjust max tokens as needed
             stream=True
         )
 
-        # Iterate over the stream and process the tokens as they come in
+        # Print each token as it arrives
         for response in response_stream:
-            # Process the response token-by-token
-            print(response, end='', flush=True)  # 
-        '''
-        response = self.backend.complete(system_prompt, user_prompt)
-        return response
+            if 'choices' in response and len(response['choices']) > 0:
+                token = response['choices'][0].get('message', {}).get('content', '')
+                print(token, end='', flush=True)  # Print each token
+    '''
+
 
 def execute_command(command):
     """Executes a given bash command and returns the output."""
@@ -41,6 +62,9 @@ def execute_command(command):
         return "Command timed out."
     except Exception as e:
         return f"Error executing command: {e}"
+    
+
+
 
 def main():
     # Initial system prompt based on the screenshot provided
