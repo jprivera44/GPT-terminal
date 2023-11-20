@@ -4,9 +4,7 @@ from backends import OpenAIChatBackend
 import os
 import openai
 
-
-
-
+'''
 class LLMQueryHandler:
     def __init__(self):
         api_key = os.getenv('OPENAI_API_KEY')
@@ -20,37 +18,50 @@ class LLMQueryHandler:
 
         response = self.backend.complete(system_prompt, user_prompt)
         return response
+'''
 
 #The code below is meant for the streaming of tokens, however I kept receiveing a nontype error
 #This is likley becuae i am using openai version 0.28, and streaming is not supported on this version.
-'''
+
+
+#new class
 class LLMQueryHandler:
     def __init__(self):
         api_key = os.getenv('OPENAI_API_KEY')
         if api_key is None:
             print("Error: The OpenAI API key is not set. Please set the OPENAI_API_KEY environment variable.")
             sys.exit(1)  # Exit the program if the API key is not set
-        self.backend = OpenAIChatBackend("text-davinci-003")
+        self.backend = OpenAIChatBackend("gpt-4-32k")
 
     def query_LLM(self, system_prompt, user_prompt):
-        # Using the streaming functionality with the correct endpoint
-        response_stream = openai.ChatCompletion.create(
-            model=self.backend.model_name,
-            messages=[
+        try:
+            # Prepare the messages for the chat context
+            messages = [
                 {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt},
-            ],
-            temperature=1.0,
-            max_tokens=100,  # Adjust max tokens as needed
-            stream=True
-        )
+                {"role": "user", "content": user_prompt}
+            ]
 
-        # Print each token as it arrives
-        for response in response_stream:
-            if 'choices' in response and len(response['choices']) > 0:
-                token = response['choices'][0].get('message', {}).get('content', '')
-                print(token, end='', flush=True)  # Print each token
-    '''
+            response_stream = openai.ChatCompletion.create(
+                model=self.backend.model_name,
+                messages=messages,
+                temperature=1.0,
+                max_tokens=100,  # Adjust max tokens as needed
+                stream=True
+            )
+
+            full_response = ""
+            for response in response_stream:
+                if 'choices' in response and len(response['choices']) > 0:
+                    token = response['choices'][0].get('message', {}).get('content', '')
+                    full_response += token
+                    print(token, end='', flush=True)  # Print each token
+            return full_response
+        except Exception as e:
+            print(f"Error during streaming: {e}")
+            return ""
+
+
+   
 
 
 def execute_command(command):
@@ -78,6 +89,7 @@ def main():
         "If possible, don't include explanation, just say the command.\n"
     )
     
+
     query_handler = LLMQueryHandler()
 
     while True:
@@ -85,26 +97,31 @@ def main():
         if user_input.lower() == 'exit':
             break
 
-        # Fetch the completion attribute from the model response.
-        model_response = query_handler.query_LLM(system_prompt, user_input).completion
-        print(f"Model Response: {model_response}")
+        # Fetch the complete response from the model # Changed
+        model_response_text = query_handler.query_LLM(system_prompt, user_input) # Changed
 
-        # Use the completion attribute to search for the <bash> tag.
-        start_tag = "<bash>"
-        end_tag = "</bash>"
-        start_index = model_response.find(start_tag)
-        end_index = model_response.find(end_tag)
+        # Check if a valid response was received # Changed
+        if model_response_text: # Changed
+            print(f"Model Response: {model_response_text}") # Changed
 
-        if start_index != -1 and end_index != -1:
-            # Extracting the command from within the <bash> tags
-            command_to_run = model_response[start_index + len(start_tag):end_index].strip()
-            if input("Do you want to run this command? (yes/no): ").lower() == 'yes':
-                output = execute_command(command_to_run)
-                print(f"Command Output: \n{output}")
+            # Use the complete response to search for the <bash> tag # Changed
+            start_tag = "<bash>"
+            end_tag = "</bash>"
+            start_index = model_response_text.find(start_tag) # Changed
+            end_index = model_response_text.find(end_tag) # Changed
+
+            if start_index != -1 and end_index != -1:
+                # Extracting the command from within the <bash> tags # Changed
+                command_to_run = model_response_text[start_index + len(start_tag):end_index].strip() # Changed
+                if input("Do you want to run this command? (yes/no): ").lower() == 'yes':
+                    output = execute_command(command_to_run)
+                    print(f"Command Output: \n{output}")
+                else:
+                    print("Command execution cancelled.")
             else:
-                print("Command execution cancelled.")
+                print("No command found to execute.")
         else:
-            print("No command found to execute.")
+            print("No response received from the model.") # Changed
 
 if __name__ == "__main__":
     main()
